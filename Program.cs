@@ -6,8 +6,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using AS_ASSN2_Rachel.Validators;
+using System;
+using System.Security.Cryptography;
+using AS_ASSN2_Rachel.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var (key, iv) = KeyGeneration.GenerateKeyAndIV();
+Console.WriteLine("Generated Encryption Key: " + key);
+Console.WriteLine("Generated Initialization Vector (IV): " + iv);
 
 builder.Services.AddScoped<LoggingService>();
 builder.Services.AddScoped<SomeService>();
@@ -58,7 +65,7 @@ builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+    options.ExpireTimeSpan = TimeSpan.FromSeconds(30);
     options.SlidingExpiration = true;
 });
 

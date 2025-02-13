@@ -20,7 +20,7 @@ namespace AS_ASSN2_Rachel.Pages
 
         public void OnGet()
         {
-            var key = KeyGeneration.GenerateRandomKey(20);
+            var key = OtpSharp.KeyGeneration.GenerateRandomKey(20);
             string secretKey = Base32Encoding.ToBase32(key);
             string secretUri = $"otpauth://totp/AS_ASSN2_Rachel:missrach.lim@gmail.com?secret={secretKey}&issuer=AS_ASSN2_Rachel";
 
