@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 namespace AS_ASSN2_Rachel.ViewModels
 {
@@ -22,11 +24,16 @@ namespace AS_ASSN2_Rachel.ViewModels
 
         [Required]
         [DataType(DataType.EmailAddress)]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
         public string EmailAddress { get; set; }
 
-        [Required]
-        [DataType(DataType.Password)]
-        public string Password { get; set; }
+    [Required]
+    [StringLength(100, MinimumLength = 12, ErrorMessage = "Password must be at least 12 characters.")]
+    [RegularExpression(@"(?i)^(?=[a-z])(?=.*[0-9])([a-z0-9!@#$%\^&*()_?+\-=]){8,15}$", 
+        ErrorMessage = "Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character.")]
+    [DataType(DataType.Password)]
+    public string Password { get; set; }
+
 
         [Required]
         [DataType(DataType.Password)]
@@ -44,5 +51,7 @@ namespace AS_ASSN2_Rachel.ViewModels
         [Required]
         [DataType(DataType.MultilineText)]
         public string WhoAmI { get; set; }
+
+        public string? ReCaptcha { get; set; }
     }
 }

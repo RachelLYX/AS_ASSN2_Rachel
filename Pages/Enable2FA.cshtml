@@ -1,0 +1,19 @@
+﻿@page
+@model AS_ASSN2_Rachel.Pages.Enable2FAModel
+@{
+    ViewData["Title"] = "Enable 2FA";
+}
+
+<h2>Enable Two-Factor Authentication</h2>
+
+<div>
+    <h3>Scan this QR Code with your authenticator app</h3>
+    @if (!string.IsNullOrEmpty(Model.QrCodeImage))
+    {
+        <img src="@Model.QrCodeImage" alt="QR Code" style="width: 150px; height: 150px;" />
+    }
+    else
+    {
+        <p>QR Code is not available.</p>
+    }
+</div>

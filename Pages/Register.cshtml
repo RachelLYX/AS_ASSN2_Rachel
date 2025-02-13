@@ -3,13 +3,14 @@
 @{
 }
 
-<div class="container mt-5">
+<div class="container mt-5" validateRequest="true">
     <div class="row justify-content-center align-items-center">
         <div class="col-sm-12 col-md-12 col-lg-4">
             <h1 class="mb-3">Register for an Account</h1>
 
             <form method="post" enctype="multipart/form-data">
                 <div asp-validation-summary="All" class="text-danger"></div>
+                @Html.AntiForgeryToken()
 
                 <div class="mb-3">
                     <label class="form-label" asp-for="RModel.FirstName">First Name</label>
@@ -40,8 +41,9 @@
 
                 <div class="mb-3">
                     <label class="form-label" asp-for="RModel.EmailAddress">Email Address</label>
-                    <input type="text" asp-for="RModel.EmailAddress" class="form-control" />
+                    <input type="email" asp-for="RModel.EmailAddress" id="EmailAddress" class="form-control" />
                     <span asp-validation-for="RModel.EmailAddress" class="text-danger"></span>
+                    <small id="emailFeedback"></small>
                 </div>
 
                 <div class="mb-3">
@@ -75,10 +77,65 @@
                     <span asp-validation-for="RModel.WhoAmI" class="text-danger"></span>
                 </div>
 
+                <input type="hidden" id="g-recaptcha-response" name="g-recpaptcha-response" />
+
                 <div class="mb-3">
-                    <button type="submit" class="btn btn-primary">Register</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Register</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://www.google.com/recaptcha/api.js?render=6LdJ584qAAAAAMILxlvFoBm9Wbi7Jux00LiPJZN8"></script>
+    <script>
+        grecaptcha.ready(function () {
+            document.getElementById('submitBtn').addEventListener('click', function (event) {
+                event.preventDefault();
+
+                grecaptcha.execute('6LdJ584qAAAAAMILxlvFoBm9Wbi7Jux00LiPJZN8', { action: 'submit' }).then(function (token) {
+                    document.getElementById('g-recaptcha-response').value = token;
+                    document.querySelector('form').submit();
+                });
+            });
+        });
+    </script>
+}
+
+<script>
+    function validatePasswordStrength() {
+        var password = document.getElementById("Password").value;
+        var feedback = document.getElementById("passwordFeedback");
+        var strengthMessage = "";
+
+        var regexLower = /[a-z]/;
+        var regexUpper = /[A-Z]/;
+        var regexNumbers = /[0-9]/;
+
+        var minLength = 12;
+
+        if (password.length < minLength) {
+            strengthMessage = "Password must be at least 12 characters long.";
+            feedback.style.color = "red";
+        } else if (!regexLower.test(password)) {
+            strengthMessage = "Pasword must contain at least one lowercase letter.";
+            feedback.style.color = "red";
+        } else if (!regexUpper.test(password)) {
+            strengthMessage = "Password must contain at least one uppercase letter.";
+            feedback.style.color = "red";
+        } else if (!regexNumbers.test(password)) {
+            strengthMessage = "Password must contain at least one number.";
+            feedback.style.color = "red";
+        } 
+        // else if (!regexSpecial.test(password)) {
+        //     strengthMessage = "Password must contain at least one special character.";
+        //     feedback.style.color = "red";
+        // } 
+        else {
+            strengthMessage = "Wow!";
+            feedback.style.color = "green";
+        }
+        feedback.textContent = strengthMessage;
+    }
+</script>

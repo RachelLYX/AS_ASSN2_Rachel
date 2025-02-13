@@ -5,6 +5,7 @@ namespace AS_ASSN2_Rachel.Model
 {
     public class ApplicationUser : IdentityUser
     {
+        public string? SessionId { get; set; }
         public string FirstName { get; set; }
 
         public string LastName { get; set; }
@@ -21,5 +22,9 @@ namespace AS_ASSN2_Rachel.Model
 
         [NotMapped]
         public IFormFile Resume { get; set; }
+
+        public string[] PasswordHistory { get; set; } = new string[0];
+
+        public DateTime? LastPasswordChangeDate { get; set; }
     }
 }

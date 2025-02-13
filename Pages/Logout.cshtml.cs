@@ -19,8 +19,9 @@ namespace AS_ASSN2_Rachel.Pages
 
         public async Task<IActionResult> OnPostLogoutAsync()
         {
+            HttpContext.Session.Clear();
             await signInManager.SignOutAsync();
-            return RedirectToPage("Login");
+            return RedirectToPage("/Login");
         }
 
         public async Task<IActionResult> OnPostDontLogoutAsync()

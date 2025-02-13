@@ -10,6 +10,9 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
+using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
+using AS_ASSN2_Rachel.Services;
 
 namespace AS_ASSN2_Rachel.Pages
 {
@@ -18,13 +21,17 @@ namespace AS_ASSN2_Rachel.Pages
         private UserManager<ApplicationUser> userManager { get; }
         private SignInManager<ApplicationUser> signInManager { get; }
 
+        private readonly IEmailSender _emailSender;
+        private const string ReCaptchaSecretKey = "6LdJ584qAAAAAEMpRaUe263YYbO8oQeAfRuCS9zh";
+
         [BindProperty]
         public Register RModel { get; set; }
 
-        public RegisterModel(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        public RegisterModel(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IEmailSender emailSender)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
+            _emailSender = emailSender;
         }
 
         private string EncryptNRIC(string nric)
@@ -47,27 +54,37 @@ namespace AS_ASSN2_Rachel.Pages
             }
         }
 
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> OnPostAsync()
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var existingUser = await userManager.FindByEmailAsync(RModel.EmailAddress);
-                if (existingUser != null)
+                return Page();
+            }
+            var recaptchaResponse = Request.Form["g-recaptcha-response"];
+
+            if (string.IsNullOrEmpty(recaptchaResponse) || !await VerifyRecaptchaAsync(recaptchaResponse))
+            {
+                ModelState.AddModelError("Recaptcha", "reCAPTCHA verification failed. Please try again.");
+            }
+
+            var existingUser = await userManager.FindByEmailAsync(RModel.EmailAddress);
+            if (existingUser != null)
+            {
+                ModelState.AddModelError("RModel.EmailAddress", "Email address is already taken.");
+                return Page();
+            }
+
+            if (RModel.Resume != null && RModel.Resume.Length > 0)
+            {
+                var allowedExtensions = new[] { ".docx", ".pdf" };
+                var fileExtension = Path.GetExtension(RModel.Resume.FileName).ToLowerInvariant();
+
+                if (!allowedExtensions.Contains(fileExtension))
                 {
-                    ModelState.AddModelError("RModel.EmailAddress", "Email address is already taken.");
+                    ModelState.AddModelError("RModel.Resume", "Only .docx and .pdf files are allowed.");
                     return Page();
                 }
-
-                if (RModel.Resume != null && RModel.Resume.Length > 0)
-                {
-                    var allowedExtensions = new[] { ".docx", ".pdf" };
-                    var fileExtension = Path.GetExtension(RModel.Resume.FileName).ToLowerInvariant();
-
-                    if (!allowedExtensions.Contains(fileExtension))
-                    {
-                        ModelState.AddModelError("RModel.Resume", "Only .docx and .pdf files are allowed.");
-                        return Page();
-                    }
 
                     var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
                     Directory.CreateDirectory(uploadsFolder);
@@ -101,19 +118,37 @@ namespace AS_ASSN2_Rachel.Pages
                 var result = await userManager.CreateAsync(user, RModel.Password);
                 if (result.Succeeded)
                 {
-                    await signInManager.SignInAsync(user, false);
-                    return RedirectToPage("Index");
+                    TempData["FirstName"] = RModel.FirstName;
+                    TempData["LastName"] = RModel.LastName;
+                    TempData["Gender"] = RModel.Gender;
+                    TempData["EmailAddress"] = RModel.EmailAddress;
+                    TempData["NRIC"] = RModel.NRIC;
+                    TempData["DateOfBirth"] = RModel.DateOfBirth.ToDateTime(new TimeOnly(0, 0));
                 }
                 foreach(var error in result.Errors)
                 {
                     ModelState.AddModelError("", error.Description);
 
                 }
-            }
-            return Page();
+            return RedirectToPage("/Index");
         }
-        public void OnGet()
+
+        private async Task<bool> VerifyRecaptchaAsync(string recaptchaResponse)
         {
+            using (var client = new HttpClient())
+            {
+                var values = new Dictionary<string, string>
+                {
+                    { "secret", ReCaptchaSecretKey },
+                    { "response", recaptchaResponse }
+                };
+                var content = new FormUrlEncodedContent(values);
+                var response = await client.PostAsync("https://www.google.com/recaptcha/api/siteverify", content);
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                dynamic jsonResponse = JsonConvert.DeserializeObject(responseString);
+                return jsonResponse.success == true;
+            }
         }
     }
 }

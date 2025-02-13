@@ -1,0 +1,13 @@
+﻿@page
+@model AS_ASSN2_Rachel.Pages.ConfirmEmailModel
+@{
+    ViewData["Title"] = "Email Confirmation";
+}
+
+<h2>Email Confirmation</h2>
+<p>@Model.Message</p>
+
+@if (Model.Message == "Your email has been confirmed. You can now log in.")
+{
+    <a href="/Login" class="btn btn-primary">Go to Login</a>
+}
